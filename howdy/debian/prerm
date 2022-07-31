@@ -13,7 +13,7 @@ if "remove" not in sys.argv and "purge" not in sys.argv:
 	sys.exit(0)
 
 # Don't try running this if it's already gone
-if not os.path.exists("/lib/security/howdy/cli"):
+if not os.path.exists("/lib64/security/howdy/cli"):
 	sys.exit(0)
 
 # Remove files and symlinks
@@ -36,7 +36,7 @@ except Exception:
 
 # Remove full installation folder, just to be sure
 try:
-	rmtree("/lib/security/howdy")
+	rmtree("/lib64/security/howdy")
 except Exception:
 	# This error is normal
 	pass

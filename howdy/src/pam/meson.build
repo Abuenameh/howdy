@@ -19,6 +19,6 @@ shared_library(
 		libevdev,
 	],
 	install: true,
-	install_dir: '/lib/security',
+	install_dir: '/lib64/security',
 	name_prefix: ''
 )
