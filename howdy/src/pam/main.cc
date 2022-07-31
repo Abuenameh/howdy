@@ -46,7 +46,7 @@ const auto DEFAULT_TIMEOUT =
     std::chrono::duration<int, std::chrono::milliseconds::period>(100);
 const auto MAX_RETRIES = 5;
 const auto PYTHON_EXECUTABLE = "python3";
-const auto COMPARE_PROCESS_PATH = "/lib/security/howdy/compare.py";
+const auto COMPARE_PROCESS_PATH = "/lib64/security/howdy/compare.py";
 
 #define S(msg) gettext(msg)
 
@@ -193,7 +193,7 @@ auto check_enabled(const INIReader &config) -> int {
  */
 auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
               bool auth_tok) -> int {
-  INIReader config("/lib/security/howdy/config.ini");
+  INIReader config("/lib64/security/howdy/config.ini");
   openlog("pam_howdy", 0, LOG_AUTHPRIV);
 
   // Error out if we could not read the config file
@@ -210,9 +210,6 @@ auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
   if ((pam_res = check_enabled(config)) != PAM_SUCCESS) {
     return pam_res;
   }
-
-  Workaround workaround =
-      get_workaround(config.GetString("core", "workaround", "input"));
 
   // Will contain PAM conversation structure
   struct pam_conv *conv = nullptr;
@@ -268,130 +265,8 @@ auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
     return PAM_SYSTEM_ERR;
   }
 
-  // NOTE: We should replace mutex and condition_variable by atomic wait, but
-  // it's too recent (C++20)
-  std::mutex m;
-  std::condition_variable cv;
-  ConfirmationType confirmation_type(ConfirmationType::Unset);
-
-  // This task wait for the status of the python subprocess (we don't want a
-  // zombie process)
-  optional_task<int> child_task([&] {
-    int status;
-    wait(&status);
-    {
-      std::unique_lock<std::mutex> lk(m);
-      if (confirmation_type == ConfirmationType::Unset) {
-        confirmation_type = ConfirmationType::Howdy;
-      }
-    }
-    cv.notify_one();
-
-    return status;
-  });
-  child_task.activate();
-
-  // This task waits for the password input (if the workaround wants it)
-  optional_task<std::tuple<int, char *>> pass_task([&] {
-    char *auth_tok_ptr = nullptr;
-    int pam_res = pam_get_authtok(
-        pamh, PAM_AUTHTOK, const_cast<const char **>(&auth_tok_ptr), nullptr);
-    {
-      std::unique_lock<std::mutex> lk(m);
-      if (confirmation_type == ConfirmationType::Unset) {
-        confirmation_type = ConfirmationType::Pam;
-      }
-    }
-    cv.notify_one();
-
-    return std::tuple<int, char *>(pam_res, auth_tok_ptr);
-  });
-
-  // We ask for the password if the function requires it and if a workaround is
-  // set
-  if (auth_tok && workaround != Workaround::Off) {
-    pass_task.activate();
-  }
-
-  // Wait for the end either of the child or the password input
-  {
-    std::unique_lock<std::mutex> lk(m);
-    cv.wait(lk, [&] { return confirmation_type != ConfirmationType::Unset; });
-  }
-
-  // The password has been entered or an error has occurred
-  if (confirmation_type == ConfirmationType::Pam) {
-    // We kill the child because we don't need its result
-    kill(child_pid, SIGTERM);
-    child_task.stop(false);
-
-    // We just wait for the thread to stop since it's this one which sent us the
-    // confirmation type
-    pass_task.stop(false);
-
-    char *password = nullptr;
-    std::tie(pam_res, password) = pass_task.get();
-
-    if (pam_res != PAM_SUCCESS) {
-      return pam_res;
-    }
-
-    // The password has been entered, we are passing it to PAM stack
-    return PAM_IGNORE;
-  }
-
-  // The compare process has finished its execution
-  child_task.stop(false);
-
-  // We want to stop the password prompt, either by canceling the thread when
-  // workaround is set to "native", or by emulating "Enter" input with
-  // "input"
-
-  // UNSAFE: We cancel the thread using pthread, pam_get_authtok seems to be
-  // a cancellation point
-  if (workaround == Workaround::Native) {
-    pass_task.stop(true);
-  } else if (workaround == Workaround::Input) {
-    // We check if we have the right permissions on /dev/uinput
-    if (euidaccess("/dev/uinput", W_OK | R_OK) != 0) {
-      syslog(LOG_WARNING, "Insufficient permissions to create the fake device");
-      conv_function(PAM_ERROR_MSG,
-                    S("Insufficient permissions to send Enter "
-                      "press, waiting for user to press it instead"));
-    } else {
-      try {
-        EnterDevice enter_device;
-        int retries;
-
-        // We try to send it
-        enter_device.send_enter_press();
-
-        for (retries = 0;
-             retries < MAX_RETRIES &&
-             pass_task.wait(DEFAULT_TIMEOUT) == std::future_status::timeout;
-             retries++) {
-          enter_device.send_enter_press();
-        }
-
-        if (retries == MAX_RETRIES) {
-          syslog(LOG_WARNING,
-                 "Failed to send enter input before the retries limit");
-          conv_function(PAM_ERROR_MSG, S("Failed to send Enter press, waiting "
-                                         "for user to press it instead"));
-        }
-      } catch (std::runtime_error &err) {
-        syslog(LOG_WARNING, "Failed to send enter input: %s", err.what());
-        conv_function(PAM_ERROR_MSG, S("Failed to send Enter press, waiting "
-                                       "for user to press it instead"));
-      }
-    }
-
-    // We stop the thread (will block until the enter key is pressed if the
-    // input wasn't focused or if the uinput device failed to send keypress)
-    pass_task.stop(false);
-  }
-
-  int status = child_task.get();
+  int status;
+  waitpid(child_pid, &status, 0);
 
   return howdy_status(username, status, config, conv_function);
 }
@@ -400,7 +275,7 @@ auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
 // the sudo command
 PAM_EXTERN auto pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
                                     const char **argv) -> int {
-  return identify(pamh, flags, argc, argv, true);
+  return identify(pamh, flags, argc, argv, false);
 }
 
 // Called by PAM when a session is started, such as by the su command
