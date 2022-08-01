@@ -45,6 +45,33 @@ inline time_point now()
     return std::chrono::system_clock::now();
 }
 
+inline void convert_image(cv::Mat& iimage, matrix<rgb_pixel>& oimage) {
+        // cv_image<bgr_pixel> cimage(image);
+        // matrix<rgb_pixel> dimage;
+        // assign_image(dimage, cimage);
+            // if (is_image<unsigned char>(img))
+            //     assign_image(image, numpy_image<unsigned char>(img));
+            // else if (is_image<rgb_pixel>(img))
+            //     assign_image(image, numpy_image<rgb_pixel>(img));
+            // else
+            // {
+            //     syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
+            //     exit_code(1);
+            // }
+
+    if (iimage.channels() == 1) {
+        assign_image(oimage, cv_image<unsigned char>(iimage));
+    }
+    else if (iimage.channels() == 3) {
+        assign_image(oimage, cv_image<bgr_pixel>(iimage));
+    }
+            else
+            {
+                syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
+                exit_code(1);
+            }
+}
+
 // inline Eigen::MatrixXd toEigenMatrix(std::vector<std::vector<double>> vectors){
 // 		Eigen::MatrixXd M(vectors.size(), vectors.front().size());
 // 	for(size_t i = 0; i < vectors.size(); i++)
@@ -64,9 +91,10 @@ public:
         pyramid_down<2> pyr;
         std::vector<rectangle> rects;
 
-        cv_image<bgr_pixel> cimage(image);
+        // cv_image<bgr_pixel> cimage(image);
         matrix<rgb_pixel> dimage;
-        assign_image(dimage, cimage);
+        convert_image(image, dimage);
+        // assign_image(dimage, cimage);
 
         // Upsampling the image will allow us to detect smaller faces but will cause the
         // program to use more RAM and run longer.
@@ -169,9 +197,10 @@ public:
         const int num_jitters,
         float padding = 0.25)
     {
-        cv_image<bgr_pixel> cimage(image);
+        // cv_image<bgr_pixel> cimage(image);
         matrix<rgb_pixel> img;
-        assign_image(img, cimage);
+        convert_image(image, img);
+        // assign_image(img, cimage);
 
         std::vector<full_object_detection> faces(1, face);
         return compute_face_descriptors(img, faces, num_jitters, padding)[0];
@@ -285,11 +314,11 @@ public:
         const int num_jitters)
     {
         dlib::array<matrix<rgb_pixel>> face_chips;
-        for (auto &img : batch_imgs)
+        for (auto image : batch_imgs)
         {
 
-            matrix<rgb_pixel> image;
-            assign_image(image, img);
+            // matrix<rgb_pixel> image;
+            // assign_image(image, img);
             // if (is_image<unsigned char>(img))
             //     assign_image(image, numpy_image<unsigned char>(img));
             // else if (is_image<rgb_pixel>(img))
@@ -549,6 +578,7 @@ const matrix_op<op_vector_to_matrix<T>> vector_to_matrix(
 
 int main(int argc, char *argv[])
 {
+    std::cout << "Starting" << std::endl;
     std::map<std::string, time_point> start_times;
     std::map<std::string, std::chrono::duration<double>> timings;
 
@@ -852,7 +882,7 @@ int main(int argc, char *argv[])
                            { return sqrt(sum(squared(encoding - face_encoding))); });
 
             // Get best match
-                      int match_index = static_cast<int>(std::distance(matches.begin(), min_element(matches.begin(), matches.end())));
+            int match_index = static_cast<int>(std::distance(matches.begin(), min_element(matches.begin(), matches.end())));
             double match = matches[match_index];
 
             // Update certainty if we have a new low
@@ -926,11 +956,12 @@ int main(int argc, char *argv[])
                 exit_code(0);
             }
         }
-	if (exposure != -1) {
-		// For a strange reason on some cameras (e.g. Lenoxo X1E) setting manual exposure works only after a couple frames
-		// are captured and even after a delay it does not always work. Setting exposure at every frame is reliable though.
-		video_capture.set(cv::CAP_PROP_AUTO_EXPOSURE, 1.0);  // 1 = Manual
-		video_capture.set(cv::CAP_PROP_EXPOSURE, double(exposure));
-    }
+        if (exposure != -1)
+        {
+            // For a strange reason on some cameras (e.g. Lenoxo X1E) setting manual exposure works only after a couple frames
+            // are captured and even after a delay it does not always work. Setting exposure at every frame is reliable though.
+            video_capture.set(cv::CAP_PROP_AUTO_EXPOSURE, 1.0); // 1 = Manual
+            video_capture.set(cv::CAP_PROP_EXPOSURE, double(exposure));
+        }
     }
 }
