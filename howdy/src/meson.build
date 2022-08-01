@@ -7,7 +7,7 @@ libevdev = dependency('libevdev')
 # libdlib = meson.get_compiler('cpp').find_library('dlib')
 #libpam = meson.get_compiler('cpp').find_library('pam')
 #threads = dependency('threads')
-add_global_arguments(['-Wno-unused'], language: 'cpp')
+add_global_arguments(['-Wno-unused', '-Wno-deprecated-enum-enum-conversion'], language: 'cpp')
 
 # Translations
 #subdir('po')
