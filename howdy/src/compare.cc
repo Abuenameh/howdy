@@ -45,31 +45,34 @@ inline time_point now()
     return std::chrono::system_clock::now();
 }
 
-inline void convert_image(cv::Mat& iimage, matrix<rgb_pixel>& oimage) {
-        // cv_image<bgr_pixel> cimage(image);
-        // matrix<rgb_pixel> dimage;
-        // assign_image(dimage, cimage);
-            // if (is_image<unsigned char>(img))
-            //     assign_image(image, numpy_image<unsigned char>(img));
-            // else if (is_image<rgb_pixel>(img))
-            //     assign_image(image, numpy_image<rgb_pixel>(img));
-            // else
-            // {
-            //     syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
-            //     exit_code(1);
-            // }
+inline void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage)
+{
+    // cv_image<bgr_pixel> cimage(image);
+    // matrix<rgb_pixel> dimage;
+    // assign_image(dimage, cimage);
+    // if (is_image<unsigned char>(img))
+    //     assign_image(image, numpy_image<unsigned char>(img));
+    // else if (is_image<rgb_pixel>(img))
+    //     assign_image(image, numpy_image<rgb_pixel>(img));
+    // else
+    // {
+    //     syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
+    //     exit_code(1);
+    // }
 
-    if (iimage.channels() == 1) {
+    if (iimage.channels() == 1)
+    {
         assign_image(oimage, cv_image<unsigned char>(iimage));
     }
-    else if (iimage.channels() == 3) {
+    else if (iimage.channels() == 3)
+    {
         assign_image(oimage, cv_image<bgr_pixel>(iimage));
     }
-            else
-            {
-                syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
-                exit_code(1);
-            }
+    else
+    {
+        syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
+        exit_code(1);
+    }
 }
 
 // inline Eigen::MatrixXd toEigenMatrix(std::vector<std::vector<double>> vectors){
@@ -519,11 +522,12 @@ public:
         return internal.set(propId, value);
     }
 
+    int fw;
+    int fh;
+
 private:
     INIReader config;
     cv::VideoCapture internal;
-    int fw;
-    int fh;
 };
 
 template <typename T>
@@ -899,33 +903,41 @@ int main(int argc, char *argv[])
                 // If set to true in the config, print debug text
                 if (end_report)
                 {
-                    //                                                                                                                                                                                                                       def
-                    //                                                                                                                                                                                                                                       print_timing(label, k) : ""
-                    //                                                                                                                                                                                                                                                                "Helper function to print a timing from the list"
-                    //                                                                                                                                                                                                                                                                "" print("  %s: %dms" % (label, round(timings[k] * 1000)))
+                    /*
+                    Helper function to print a timing from the list
+                    */
+                    auto syslog_timing = [&timings](std::string label, std::string k)
+                    {
+                        syslog(LOG_INFO, "  %s: %dms", label.c_str(), int(round(timings[k].count() * 1000)));
+                    };
 
-                    // #Print a nice timing report
-                    //                                                                                                                                                                                                                                                                    print(_("Time spent"))
-                    //                                                                                                                                                                                                                                                                        print_timing(_("Starting up"), "in")
-                    //                                                                                                                                                                                                                                                                            print(_("  Open cam + load libs: %dms") % (round(max(timings["ll"], timings["ic"]) * 1000, )))
-                    //                                                                                                                                                                                                                                                                                print_timing(_("  Opening the camera"), "ic")
-                    //                                                                                                                                                                                                                                                                                    print_timing(_("  Importing recognition libs"), "ll")
-                    //                                                                                                                                                                                                                                                                                        print_timing(_("Searching for known face"), "fl")
-                    //                                                                                                                                                                                                                                                                                            print_timing(_("Total time"), "tt")
+                    // Print a nice timing report
+                    syslog(LOG_INFO, "Time spent");
+                    syslog_timing("Starting up", "in");
+                    syslog(LOG_INFO, "  Open cam + load libs: %dms", int(round(std::max(timings["ll"].count(), timings["ic"].count()) * 1000)));
+                    syslog_timing("  Opening the camera", "ic");
+                    syslog_timing("  Importing recognition libs", "ll");
+                    syslog_timing("Searching for known face", "fl");
+                    syslog_timing("Total time", "tt");
 
-                    //                                                                                                                                                                                                                                                                                                print(_("\nResolution"))
-                    //                                                                                                                                                                                                                                                                                                    width = video_capture.fw or 1 print(_("  Native: %dx%d") % (height, width))
-                    // #Save the new size for diagnostics
-                    //                                                                                                                                                                                                                                                                                                                                    scale_height,
-                    //             scale_width = frame.shape[:2] print(_("  Used: %dx%d") % (scale_height, scale_width))
+                    syslog(LOG_INFO, "\nResolution");
+                    double width = video_capture.fw;
+                    if (width == 0)
+                    {
+                        width = 1;
+                    }
+                    syslog(LOG_INFO, "  Native: %dx%d", int(height), int(width));
+                    // Save the new size for diagnostics
+                    // scale_height, scale_width = frame.shape[:2];
+                    // syslog(LOG_INFO, "  Used: %dx%d", scale_height, scale_width);
 
-                    // #Show the total number of frames and calculate the FPS by deviding it by the total scan time
-                    //                                               print(_("\nFrames searched: %d (%.2f fps)") % (frames, frames / timings["fl"]))
-                    //                                                   print(_("Black frames ignored: %d ") % (black_tries, ))
-                    //                                                       print(_("Dark frames ignored: %d ") % (dark_tries, ))
-                    //                                                           print(_("Certainty of winning frame: %.3f") % (match * 10, ))
+                    // Show the total number of frames and calculate the FPS by deviding it by the total scan time
+                    syslog(LOG_INFO, "\nFrames searched: %d (%.2f fps)", frames, frames / timings["fl"].count());
+                    syslog(LOG_INFO, "Black frames ignored: %d ", black_tries);
+                    syslog(LOG_INFO, "Dark frames ignored: %d ", dark_tries);
+                    syslog(LOG_INFO, "Certainty of winning frame: %.3f", match * 10);
 
-                    //                                                               print(_("Winning model: %d (\"%s\")") % (match_index, models[match_index]["label"]))
+                    syslog(LOG_INFO, "Winning model: %d (\"%s\")", match_index, std::string(models[match_index]["label"]).c_str());
                 }
                 // Make snapshot if enabled
                 if (capture_successful)
@@ -938,17 +950,17 @@ int main(int argc, char *argv[])
                 {
                     // import rubberstamps
 
-                    //                                                                       send_to_ui("S", "")
+                    // send_to_ui("S", "")
 
-                    //                                                                           if "gtk_proc" not in
-                    //                                                                           vars() : gtk_proc = None
+                    // if "gtk_proc" not in vars() : 
+                    // gtk_proc = None
 
-                    //                                                                                                   rubberstamps.execute(config, gtk_proc, {
-                    //                                                                                                       "video_capture" : video_capture,
-                    //                                                                                                       "face_detector" : face_detector,
-                    //                                                                                                       "pose_predictor" : pose_predictor,
-                    //                                                                                                       "clahe" : clahe
-                    //                                                                                                   })
+                    //  rubberstamps.execute(config, gtk_proc, {
+                    //  "video_capture" : video_capture,
+                    //  "face_detector" : face_detector,
+                    //  "pose_predictor" : pose_predictor,
+                    //  "clahe" : clahe
+                    //  })
                 }
 
                 // End peacefully
