@@ -452,7 +452,8 @@ public:
         // Create reader
         // The internal video recorder
         // Start video capture on the IR camera through OpenCV
-        internal = cv::VideoCapture(config.Get("video", "device_path", ""), cv::CAP_V4L);
+        // internal = cv::VideoCapture(config.Get("video", "device_path", ""), cv::CAP_V4L);
+        internal = cv::VideoCapture(config.Get("video", "device_path", ""));
 
         // Force MJPEG decoding if true
         if (config.GetBoolean("video", "force_mjpeg", false))
