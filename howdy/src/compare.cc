@@ -578,7 +578,6 @@ const matrix_op<op_vector_to_matrix<T>> vector_to_matrix(
 
 int main(int argc, char *argv[])
 {
-    std::cout << "Starting" << std::endl;
     std::map<std::string, time_point> start_times;
     std::map<std::string, std::chrono::duration<double>> timings;
 
