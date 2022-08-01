@@ -686,15 +686,16 @@ int main(int argc, char *argv[])
         exit_code(1);
     }
 
-    face_detection_model face_detector;
+    face_detection_model *face_detector_p;
     if (use_cnn)
     {
-        face_detector = cnn_face_detection_model_v1(PATH + "/dlib-data/mmod_human_face_detector.dat");
+        face_detector_p = new cnn_face_detection_model_v1(PATH + "/dlib-data/mmod_human_face_detector.dat");
     }
     else
     {
-        face_detector = frontal_face_detector_model();
+        face_detector_p = new frontal_face_detector_model();
     }
+    face_detection_model &face_detector = *face_detector_p;
 
     // Start the others regardless
     shape_predictor_model pose_predictor = shape_predictor_model(PATH + "/dlib-data/shape_predictor_5_face_landmarks.dat");
