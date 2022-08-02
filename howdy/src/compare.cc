@@ -1,11 +1,15 @@
 #include <sys/syslog.h>
 #include <syslog.h>
+#include <unistd.h>
+#include <limits.h>
 
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 #include <chrono>
 #include <map>
+#include <iomanip>
+#include <ctime>
 
 #include <opencv2/videoio.hpp>
 #include <opencv2/imgproc.hpp>
@@ -20,11 +24,10 @@
 #include "video_capture.hh"
 #include "models.hh"
 #include "compare.hh"
+#include "snapshot.hh"
 #include "utils.hh"
 
 #include "json.hpp"
-
-// const std::string PATH = "/lib64/security/howdy";
 
 using json = nlohmann::json;
 using namespace dlib;
@@ -89,7 +92,7 @@ int main(int argc, char *argv[])
     // Total amount of frames captured
     int frames = 0;
     // Captured frames for snapshot capture
-    // snapframes = [];
+    std::vector<cv::Mat> snapframes;
     // Tracks the lowest certainty value in the loop
     double lowest_certainty = 10;
 
@@ -223,6 +226,27 @@ int main(int argc, char *argv[])
     start_times["fr"] = now();
     double dark_running_total = 0;
 
+    /* Generate snapshot after detection */
+    auto make_snapshot = [&](std::string type)
+    {
+        std::time_t t = std::time(nullptr);
+        std::tm tm = *std::localtime(&t);
+        std::ostringstream osstream;
+        osstream << std::put_time(&tm, "%Y/%m/%d %H:%M:%S UTC");
+        
+        char hostname[HOST_NAME_MAX];
+        gethostname(hostname, HOST_NAME_MAX);
+
+        std::vector<std::string> text_lines{
+            type + " LOGIN",
+            "Date: " + osstream.str(),
+            "Scan time: " + std::to_string(round(std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "s",
+            "Frames: " + std::to_string(frames) + " (" + std::to_string(round(frames / (now() - start_times["fr"]).count() * 100) / 100) + "FPS)",
+            "Hostname: " + std::string(hostname),
+            "Best certainty value: " + std::to_string(round(lowest_certainty * 100) / 10)};
+        generate(snapframes, text_lines);
+    };
+
     while (true)
     {
         // Increment the frame count every loop
@@ -243,7 +267,7 @@ int main(int argc, char *argv[])
             // Create a timeout snapshot if enabled
             if (capture_failed)
             {
-                // make_snapshot(_("FAILED"))
+                make_snapshot("FAILED");
             }
 
             if (dark_tries == valid_frames)
@@ -268,8 +292,8 @@ int main(int argc, char *argv[])
         if (capture_failed || capture_successful)
         {
             // Start capturing frames for the snapshot
-            // if len(snapframes) < 3:
-            // 	snapframes.append(frame)
+            if (snapframes.size() < 3)
+                snapframes.push_back(frame);
         }
 
         // Create a histogram of the image with 8 values
@@ -420,7 +444,7 @@ int main(int argc, char *argv[])
                 // Make snapshot if enabled
                 if (capture_successful)
                 {
-                    // make_snapshot(_("SUCCESSFUL"));
+                    make_snapshot("SUCCESSFUL");
                 }
 
                 // Run rubberstamps if enabled
@@ -430,7 +454,7 @@ int main(int argc, char *argv[])
 
                     // send_to_ui("S", "")
 
-                    // if "gtk_proc" not in vars() : 
+                    // if "gtk_proc" not in vars() :
                     // gtk_proc = None
 
                     //  rubberstamps.execute(config, gtk_proc, {
