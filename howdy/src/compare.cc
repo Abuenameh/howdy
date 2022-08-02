@@ -25,6 +25,7 @@
 #include "models.hh"
 #include "compare.hh"
 #include "snapshot.hh"
+#include "rubber_stamps.hh"
 #include "utils.hh"
 
 #include "json.hpp"
@@ -59,7 +60,7 @@ void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage)
     }
 }
 
-inline time_point now()
+time_point now()
 {
     return std::chrono::system_clock::now();
 }
@@ -293,6 +294,7 @@ int main(int argc, char *argv[])
         cv::Mat frame, gsframe;
         video_capture.read_frame(frame, tempframe);
         clahe->apply(tempframe, gsframe);
+        gsframe = tempframe;
 
         // If snapshots have been turned on
         if (capture_failed || capture_successful)
@@ -456,6 +458,8 @@ int main(int argc, char *argv[])
                 // Run rubberstamps if enabled
                 if (config.GetBoolean("rubberstamps", "enabled", false))
                 {
+                    OpenCV opencv(video_capture, face_detector, pose_predictor, clahe);
+                    execute(config, 0, opencv);
                     // import rubberstamps
 
                     // send_to_ui("S", "")

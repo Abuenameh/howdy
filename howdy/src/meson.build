@@ -7,7 +7,7 @@ libevdev = dependency('libevdev')
 # libdlib = meson.get_compiler('cpp').find_library('dlib')
 #libpam = meson.get_compiler('cpp').find_library('pam')
 #threads = dependency('threads')
-add_global_arguments(['-Wno-unused', '-Wno-deprecated-enum-enum-conversion'], language: 'cpp')
+add_global_arguments(['-Wno-unused', '-Wno-deprecated-enum-enum-conversion', '-Wno-sign-compare'], language: 'cpp')
 
 # Translations
 #subdir('po')
@@ -18,6 +18,7 @@ executable(
 	'video_capture.cc',
 	'models.cc',
 	'snapshot.cc',
+	'rubber_stamps.cc',
 #	'enter_device.cc',
 	dependencies: [
 #		libpam,
