@@ -612,7 +612,7 @@ int main(int argc, char *argv[])
     // Captured frames for snapshot capture
     // snapframes = [];
     // Tracks the lowest certainty value in the loop
-    int lowest_certainty = 10;
+    double lowest_certainty = 10;
     // Face recognition/detection instances
     // face_detector = None;
     // pose_predictor = None;
