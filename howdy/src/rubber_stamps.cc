@@ -315,7 +315,7 @@ void execute(INIReader &config, int gtk_proc, OpenCV &opencv)
 		instance->declare_config();
 
 		// Split the optional arguments at the end of the rule by spaces
-		std::vector<std::string> raw_options = split(regex_result[4].str(), " \\t,");
+		std::vector<std::string> raw_options = split(regex_result[4].str(), " \t,");
 
 		// For each of those optional arguments
 		for (std::string &raw_option : raw_options)
