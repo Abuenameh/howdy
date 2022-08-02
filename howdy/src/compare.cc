@@ -294,7 +294,6 @@ int main(int argc, char *argv[])
         cv::Mat frame, gsframe;
         video_capture.read_frame(frame, tempframe);
         clahe->apply(tempframe, gsframe);
-        gsframe = tempframe;
 
         // If snapshots have been turned on
         if (capture_failed || capture_successful)

@@ -155,12 +155,12 @@ public:
 		while (true)
 		{
 			// Read a frame from the camera
-			cv::Mat tempframe, frame;
-			opencv.video_capture.read_frame(tempframe, frame);
+			cv::Mat ret, tempframe;
+			cv::Mat frame;
+			opencv.video_capture.read_frame(ret, tempframe);
 
 			// Apply CLAHE to get a better picture
 			opencv.clahe->apply(tempframe, frame);
-			frame = tempframe;
 
 			// Detect all faces in the frame
 			std::vector<rectangle> face_locations = opencv.face_detector(frame, 1);
