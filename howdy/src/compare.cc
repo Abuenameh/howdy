@@ -404,8 +404,9 @@ int main(int argc, char *argv[])
                     }
                     syslog(LOG_INFO, "  Native: %dx%d", int(height), int(width));
                     // Save the new size for diagnostics
-                    // scale_height, scale_width = frame.shape[:2];
-                    // syslog(LOG_INFO, "  Used: %dx%d", scale_height, scale_width);
+                    int scale_height = frame.rows;
+                    int scale_width = frame.cols;
+                    syslog(LOG_INFO, "  Used: %dx%d", scale_height, scale_width);
 
                     // Show the total number of frames and calculate the FPS by deviding it by the total scan time
                     syslog(LOG_INFO, "\nFrames searched: %d (%.2f fps)", frames, frames / timings["fl"].count());
