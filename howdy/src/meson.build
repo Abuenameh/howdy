@@ -15,6 +15,7 @@ add_global_arguments(['-Wno-unused', '-Wno-deprecated-enum-enum-conversion'], la
 executable(
 	'howdy-auth',
 	'compare.cc',
+	'video_capture.cc',
 #	'enter_device.cc',
 	dependencies: [
 #		libpam,
