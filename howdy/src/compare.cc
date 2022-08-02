@@ -73,6 +73,8 @@ std::string to_string(double value) {
 
 int main(int argc, char *argv[])
 {
+    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
+
     std::map<std::string, time_point> start_times;
     std::map<std::string, std::chrono::duration<double>> timings;
 
