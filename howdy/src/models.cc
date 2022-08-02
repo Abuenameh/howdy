@@ -245,9 +245,8 @@ shape_predictor_model::shape_predictor_model(const std::string &model_filename)
 
 full_object_detection shape_predictor_model::operator()(cv::Mat &image, const rectangle &box)
 {
-    cv_image<bgr_pixel> cimage(image);
     matrix<rgb_pixel> img;
-    assign_image(img, cimage);
+    convert_image(image, img);
 
     return predictor(img, box);
 }
