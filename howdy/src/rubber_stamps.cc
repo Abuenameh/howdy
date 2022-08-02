@@ -344,7 +344,20 @@ void execute(INIReader &config, int gtk_proc, OpenCV &opencv)
 		if (verbose)
 		{
 			syslog(LOG_INFO, "Stamp \"%s\" options parsed:", type.c_str());
-			// 	print(instance.options)
+			for (auto &opt_pair : instance->options)
+			{
+				option opt = opt_pair.second;
+				std::string value;
+				if (std::holds_alternative<std::string>(opt))
+					value = std::get<std::string>(opt);
+				else if (std::holds_alternative<int>(opt))
+					value = std::to_string(std::get<int>(opt));
+				else if (std::holds_alternative<double>(opt))
+					value = std::to_string(std::get<double>(opt));
+				else if (std::holds_alternative<bool>(opt))
+					value = std::to_string(std::get<bool>(opt));
+				syslog(LOG_INFO, "%s: %s", opt_pair.first.c_str(), value.c_str());
+			}
 			syslog(LOG_INFO, "Executing stamp");
 		}
 
