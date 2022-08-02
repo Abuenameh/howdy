@@ -13,6 +13,7 @@
 
 #include <opencv2/videoio.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/core/utils/logger.hpp>
 
 #include <dlib/opencv.h>
 #include <dlib/dnn.h>
