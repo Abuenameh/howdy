@@ -7,6 +7,8 @@
 #include "utils.hh"
 #include "rubber_stamps.hh"
 
+using namespace std::chrono_literals;
+
 enum TextType
 {
 	UI_TEXT,
@@ -220,7 +222,7 @@ public:
 					set_ui_text("", UI_SUBTEXT);
 
 					// 	Return true for nodding yes and false for shaking no
-					::sleep(1);
+					std::this_thread::sleep_for(800ms);
 					return (axis == "y");
 				}
 
