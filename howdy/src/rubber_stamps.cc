@@ -151,7 +151,7 @@ public:
 		time_point starttime = now();
 
 		// Keep running the loop while we have not hit timeout yet
-		while (now() < starttime + std::chrono::seconds(std::get<double>(options["timeout"])))
+		while (now() < starttime + std::chrono::seconds(int(round(std::get<double>(options["timeout"])))))
 		{
 			// Read a frame from the camera
 			cv::Mat ret, tempframe;
