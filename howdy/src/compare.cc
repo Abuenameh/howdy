@@ -64,6 +64,12 @@ inline time_point now()
     return std::chrono::system_clock::now();
 }
 
+std::string to_string(double value) {
+    std::ostringstream osstream;
+    osstream << value;
+    return osstream.str();
+}
+
 int main(int argc, char *argv[])
 {
     std::map<std::string, time_point> start_times;
@@ -240,10 +246,10 @@ int main(int argc, char *argv[])
         std::vector<std::string> text_lines{
             type + " LOGIN",
             "Date: " + osstream.str(),
-            "Scan time: " + std::to_string(round(std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "s",
-            "Frames: " + std::to_string(frames) + " (" + std::to_string(round(frames / (now() - start_times["fr"]).count() * 100) / 100) + "FPS)",
+            "Scan time: " + to_string(round(std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "s",
+            "Frames: " + std::to_string(frames) + " (" + to_string(round(frames / std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "FPS)",
             "Hostname: " + std::string(hostname),
-            "Best certainty value: " + std::to_string(round(lowest_certainty * 100) / 10)};
+            "Best certainty value: " + to_string(round(lowest_certainty * 100) / 10)};
         generate(snapframes, text_lines);
     };
 
