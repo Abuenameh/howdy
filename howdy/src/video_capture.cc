@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 Creates a new VideoCapture instance depending on the settings in the
 provided config file.
 */
-VideoCapture::VideoCapture(INIReader config_) : config(config_)
+VideoCapture::VideoCapture(INIReader& config_) : config(config_)
 {
     if (!fs::exists(fs::status(config.Get("video", "device_path", ""))))
     {

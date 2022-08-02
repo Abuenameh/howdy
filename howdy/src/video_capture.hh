@@ -15,7 +15,7 @@ public:
     Creates a new VideoCapture instance depending on the settings in the
     provided config file.
     */
-    VideoCapture(INIReader config_);
+    VideoCapture(INIReader& config_);
 
     /*
     Frees resources when destroyed
@@ -45,7 +45,7 @@ public:
     int fh;
 
 private:
-    INIReader config;
+    INIReader& config;
     cv::VideoCapture internal;
 };
 
