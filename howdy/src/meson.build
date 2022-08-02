@@ -16,6 +16,7 @@ executable(
 	'howdy-auth',
 	'compare.cc',
 	'video_capture.cc',
+	'models.cc',
 #	'enter_device.cc',
 	dependencies: [
 #		libpam,
