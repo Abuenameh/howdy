@@ -17,6 +17,7 @@ executable(
 	'compare.cc',
 	'video_capture.cc',
 	'models.cc',
+	'snapshot.cc',
 #	'enter_device.cc',
 	dependencies: [
 #		libpam,

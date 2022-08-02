@@ -6,6 +6,8 @@
 
 using namespace dlib;
 
+const std::string PATH = "/lib64/security/howdy";
+
 void exit_code(int code);
 
 void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage);

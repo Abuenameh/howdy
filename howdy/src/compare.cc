@@ -20,10 +20,11 @@
 #include "video_capture.hh"
 #include "models.hh"
 #include "compare.hh"
+#include "utils.hh"
 
 #include "json.hpp"
 
-const std::string PATH = "/lib64/security/howdy";
+// const std::string PATH = "/lib64/security/howdy";
 
 using json = nlohmann::json;
 using namespace dlib;
