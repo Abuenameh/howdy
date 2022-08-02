@@ -19,6 +19,8 @@ executable(
 	'models.cc',
 	'snapshot.cc',
 	'rubber_stamps.cc',
+	'process/process.cpp',
+	'process/process_unix.cpp',
 #	'enter_device.cc',
 	dependencies: [
 #		libpam,
