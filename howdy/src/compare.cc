@@ -30,14 +30,18 @@
 #include "utils.hh"
 
 #include "json/json.hpp"
+#include "process/process.hpp"
 
 using json = nlohmann::json;
 using namespace dlib;
+using namespace TinyProcessLib;
 
 namespace fs = std::filesystem;
 
 typedef std::chrono::time_point<std::chrono::system_clock> time_point;
 
+std::shared_ptr<Process> gtk_proc;
+std::function<void(const char *bytes, size_t n)> gtk_pipe;
 
 void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage)
 /*Exit while closeing howdy-gtk properly*/
@@ -62,14 +66,24 @@ void exit_gtk()
 }
 
 time_point now()
+/*Send message to the auth ui*/
+void send_to_ui(std::string type, std::string message)
 {
     return std::chrono::system_clock::now();
 }
+    // Only execute of the proccess started
+    if (gtk_proc)
+    {
+        // Format message so the ui can parse it
+        message = type + "=" + message + " \n";
 
 std::string to_string(double value) {
     std::ostringstream osstream;
     osstream << value;
     return osstream.str();
+        // Try to send the message to the auth ui, but it's okay if that fails
+        gtk_proc->write(message);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -151,6 +165,22 @@ int main(int argc, char *argv[])
 
     // Send the gtk outupt to the terminal if enabled in the config
     // gtk_pipe = sys.stdout if gtk_stdout else subprocess.DEVNULL
+    if (gtk_stdout)
+        gtk_pipe = [](const char *bytes, size_t n)
+        { std::cout << std::string{bytes, n}; };
+    else
+        gtk_pipe = nullptr;
+
+    gtk_proc = std::make_shared<Process>("/lib64/security/howdy-gtk/howdy-gtk --start-auth-ui", "", gtk_pipe, gtk_pipe, true);
+    // gtk_proc = subprocess.Popen(["../howdy-gtk/src/init.py", "--start-auth-ui"], stdin=subprocess.PIPE, stdout=gtk_pipe, stderr=gtk_pipe)
+    // if (gtk_stdout) {
+    // gtk_proc = std::make_shared<Process>("../howdy-gtk/src/build/howdy-gtk --start-auth-ui", "", [](const char *bytes, size_t n)
+    //               { std::cout << std::string{bytes, n}; }, [](const char *bytes, size_t n)
+    //               { std::cout << std::string{bytes, n}; }, true)
+    // }
+    // else {
+    // gtk_proc = std::make_shared<Process>("../howdy-gtk/src/build/howdy-gtk --start-auth-ui", "", nullptr, nullptr, true)
+    // }
     std::atexit(exit_gtk);
 
     // Start the auth ui, register it to be always be closed on exit
@@ -161,7 +191,7 @@ int main(int argc, char *argv[])
     //     pass
 
     // Write to the stdin to redraw ui
-    // send_to_ui("M", _("Starting up..."))
+    send_to_ui("M", "Starting up...");
 
     // Save the time needed to start the script
     timings["in"] = now() - start_times["st"];
@@ -229,7 +259,7 @@ int main(int argc, char *argv[])
     auto clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
 
     // Let the ui know that we're ready
-    // send_to_ui("M", _("Identifying you..."))
+    send_to_ui("M", "Identifying you...");
 
     // Start the read loop
     frames = 0;
@@ -240,11 +270,6 @@ int main(int argc, char *argv[])
     /* Generate snapshot after detection */
     auto make_snapshot = [&](std::string type)
     {
-        std::time_t t = std::time(nullptr);
-        std::tm tm = *std::localtime(&t);
-        std::ostringstream osstream;
-        osstream << std::put_time(&tm, "%Y/%m/%d %H:%M:%S UTC");
-        
         char hostname[HOST_NAME_MAX];
         gethostname(hostname, HOST_NAME_MAX);
 
@@ -270,7 +295,7 @@ int main(int argc, char *argv[])
             ui_subtext += " (skipped " + std::to_string(dark_tries) + " dark frames)";
         }
         // Show it in the ui as subtext
-        // send_to_ui("S", ui_subtext)
+        send_to_ui("S", ui_subtext);
 
         // Stop if we've exceded the time limit
         if (std::chrono::duration<double>(now() - start_times["fr"]).count() > timeout)
@@ -462,20 +487,9 @@ int main(int argc, char *argv[])
                 if (config.GetBoolean("rubberstamps", "enabled", false))
                 {
                     OpenCV opencv(video_capture, face_detector, pose_predictor, clahe);
-                    execute(config, 0, opencv);
-                    // import rubberstamps
+                    execute(config, gtk_proc, opencv);
 
-                    // send_to_ui("S", "")
-
-                    // if "gtk_proc" not in vars() :
-                    // gtk_proc = None
-
-                    //  rubberstamps.execute(config, gtk_proc, {
-                    //  "video_capture" : video_capture,
-                    //  "face_detector" : face_detector,
-                    //  "pose_predictor" : pose_predictor,
-                    //  "clahe" : clahe
-                    //  })
+                    send_to_ui("S", "");
                 }
 
                 // End peacefully
