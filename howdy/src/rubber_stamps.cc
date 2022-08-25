@@ -235,6 +235,83 @@ public:
 	}
 };
 
+class hotkey : public RubberStamp {
+	public:
+	hotkey(bool verbose, INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv) : RubberStamp(verbose, config, gtk_proc, opencv) {
+		pressed_key = "none";
+	}
+
+	virtual ~hotkey() = default;
+
+	virtual std::string name()
+	{
+		return "hotkey";
+	}
+
+		/*Set the default values for the optional arguments*/
+	virtual void declare_config() {
+		options["abort_key"] = "esc";
+		options["confirm_key"] = "enter";
+	}
+
+		/*Wait for the user to press a hotkey*/
+	virtual bool run() {
+		double time_left = std::get<double>(options["timeout"]);
+		std::string time_string = std::get<bool>(options["failsafe"]) ? "Aborting authorisation in " : "Authorising in ";
+
+		// Set the ui to default strings
+		set_ui_text(time_string + std::to_string(int(time_left)), UI_TEXT);
+		set_ui_text("Press " + std::get<std::string>(options["abort_key"]) + " to abort, " + std::get<std::string>(options["confirm_key"]) + " to authorise", UI_SUBTEXT);
+
+		// Register hotkeys with the kernel
+		add_hotkey(std::get<std::string>(options["abort_key"]), [&]() {
+			on_key("abort");
+			return false;
+		});
+		add_hotkey(std::get<std::string>(options["confirm_key"]), [&]() {
+			on_key("confirm");
+			return false;
+		});
+
+		// While we have not hit our timeout yet
+		while (time_left > 0) {
+			// Remove 0.1 seconds from the timer, as that's how long we sleep
+			time_left -= 0.1;
+			// Update the ui with the new time
+			set_ui_text(time_string + std::to_string(int(time_left) + 1), UI_TEXT);
+
+			// If the abort key was pressed while the loop was sleeping
+			if (pressed_key == "abort") {
+				// Set the ui to confirm the abort
+				set_ui_text("Authentication aborted", UI_TEXT);
+				set_ui_text("", UI_SUBTEXT);
+
+				// Exit
+				std::this_thread::sleep_for(1s);
+				return false;
+			}
+
+			// If confirm has pressed, return that auth can continue
+			else if (pressed_key == "confirm")
+				return true;
+
+			// If no key has been pressed, wait for a bit and check again
+			std::this_thread::sleep_for(100ms);
+		}
+
+		// When our timeout hits, either abort or continue based on failsafe of faildeadly
+		return !std::get<bool>(options["failsafe"]);
+	}
+
+		/*Called when the user presses a key*/
+	void on_key(std::string type) {
+		pressed_key = type;
+	}
+
+	std::string pressed_key;
+
+};
+
 std::vector<std::shared_ptr<RubberStamp>> get_installed_stamps(bool verbose, INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv)
 {
 	std::vector<std::shared_ptr<RubberStamp>> installed_stamps;
