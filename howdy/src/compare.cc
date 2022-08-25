@@ -38,13 +38,10 @@ namespace fs = std::filesystem;
 
 typedef std::chrono::time_point<std::chrono::system_clock> time_point;
 
-void exit_code(int code)
-{
-    /*Terminate gtk_proc*/
-    exit(code);
-}
 
 void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage)
+/*Exit while closeing howdy-gtk properly*/
+void exit_gtk()
 {
     if (iimage.channels() == 1)
     {
@@ -59,6 +56,9 @@ void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage)
         syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
         exit_code(1);
     }
+    // Exit the auth ui process if there is one
+    if (gtk_proc)
+        gtk_proc->kill(true);
 }
 
 time_point now()
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     // Make sure we were given an username to test against
     if (argc < 2)
     {
-        exit_code(12);
+        exit(12);
     }
 
     // The username of the user being authenticated
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     if (!fs::exists(fs::status(PATH + "/models/" + user + ".dat")))
     {
         syslog(LOG_ERR, "Model file not found for user %s", user);
-        exit_code(10);
+        exit(10);
     }
     std::ifstream f(PATH + "/models/" + user + ".dat");
     models = json::parse(f);
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
     // Check if the file contains a model
     if (models.size() < 1)
     {
-        exit_code(10);
+        exit(10);
     }
 
     // Read config from disk
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
     if (config.ParseError() != 0)
     {
         syslog(LOG_ERR, "Failed to parse the configuration file: %d", config.ParseError());
-        exit_code(10);
+        exit(10);
     }
 
     // Get all config values needed
@@ -151,6 +151,7 @@ int main(int argc, char *argv[])
 
     // Send the gtk outupt to the terminal if enabled in the config
     // gtk_pipe = sys.stdout if gtk_stdout else subprocess.DEVNULL
+    std::atexit(exit_gtk);
 
     // Start the auth ui, register it to be always be closed on exit
     // try:
@@ -171,7 +172,7 @@ int main(int argc, char *argv[])
     if (!fs::is_regular_file(fs::status(PATH + "/dlib-data/shape_predictor_5_face_landmarks.dat")))
     {
         syslog(LOG_ERR, "Data files have not been downloaded");
-        exit_code(1);
+        exit(1);
     }
 
     face_detection_model *face_detector_p;
@@ -284,11 +285,11 @@ int main(int argc, char *argv[])
             {
                 syslog(LOG_ERR, "All frames were too dark, please check dark_threshold in config");
                 syslog(LOG_ERR, "Average darkness: %f, Threshold: %f", dark_running_total / std::max(1, valid_frames), dark_threshold);
-                exit_code(13);
+                exit(13);
             }
             else
             {
-                exit_code(11);
+                exit(11);
             }
         }
 
@@ -478,7 +479,7 @@ int main(int argc, char *argv[])
                 }
 
                 // End peacefully
-                exit_code(0);
+                exit(0);
             }
         }
         if (exposure != -1)
