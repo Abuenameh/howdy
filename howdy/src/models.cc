@@ -122,7 +122,7 @@ std::vector<std::vector<matrix<double, 0, 1>>> face_recognition_model_v1::batch_
     if (batch_imgs.size() != batch_faces.size())
     {
         syslog(LOG_ERR, "The array of images and the array of array of locations must be of the same size");
-        exit_code(1);
+        exit(1);
     }
 
     int total_chips = 0;
@@ -134,7 +134,7 @@ std::vector<std::vector<matrix<double, 0, 1>>> face_recognition_model_v1::batch_
             if (f.num_parts() != 68 && f.num_parts() != 5)
             {
                 syslog(LOG_ERR, "The full_object_detection must use the iBUG 300W 68 point face landmark style or dlib's 5 point style.");
-                exit_code(1);
+                exit(1);
             }
         }
     }
@@ -199,7 +199,7 @@ std::vector<matrix<double, 0, 1>> face_recognition_model_v1::batch_compute_face_
         {
             syslog(LOG_ERR, "Unsupported image size, it should be of size 150x150. Also cropping must be done as `dlib.get_face_chip` would do it. \
                 That is, centered and scaled essentially the same way.");
-            exit_code(1);
+            exit(1);
         }
 
         face_chips.push_back(image);

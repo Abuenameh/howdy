@@ -21,7 +21,7 @@ VideoCapture::VideoCapture(INIReader& config_) : config(config_)
         if (config.GetBoolean("video", "warn_no_device", true))
         {
             syslog(LOG_ERR, "Howdy could not find a camera device at the path specified in the config file.");
-            exit_code(1);
+            exit(1);
         }
     }
 
@@ -82,7 +82,7 @@ void VideoCapture::read_frame(cv::Mat &frame, cv::Mat &gsframe)
     if (!ret)
     {
         syslog(LOG_ERR, "Failed to read camera specified in the 'device_path' config option, aborting");
-        exit_code(1);
+        exit(1);
     }
 
     // Convert from color to grayscale
