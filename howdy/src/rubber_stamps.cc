@@ -4,6 +4,8 @@
 #include <memory>
 #include <regex>
 
+#include "string_utils/string_utils.hh"
+
 #include "utils.hh"
 #include "rubber_stamps.hh"
 
@@ -16,45 +18,6 @@ enum TextType
 };
 
 typedef std::variant<std::string, int, double, bool> option;
-
-std::vector<std::string> split(const std::string &text, const std::string &delims)
-{
-	std::vector<std::string> tokens;
-	std::size_t start = text.find_first_not_of(delims), end = 0;
-
-	while ((end = text.find_first_of(delims, start)) != std::string::npos)
-	{
-		tokens.push_back(text.substr(start, end - start));
-		start = text.find_first_not_of(delims, end);
-	}
-	if (start != std::string::npos)
-		tokens.push_back(text.substr(start));
-
-	return tokens;
-}
-
-// trim from start (in place)
-static inline void ltrim(std::string &s)
-{
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch)
-									{ return !std::isspace(ch); }));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string &s)
-{
-	s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch)
-						 { return !std::isspace(ch); })
-				.base(),
-			s.end());
-}
-
-// trim from both ends (in place)
-static inline void trim(std::string &s)
-{
-	ltrim(s);
-	rtrim(s);
-}
 
 /* Howdy rubber stamp */
 class RubberStamp
