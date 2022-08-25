@@ -316,6 +316,7 @@ std::vector<std::shared_ptr<RubberStamp>> get_installed_stamps(bool verbose, INI
 {
 	std::vector<std::shared_ptr<RubberStamp>> installed_stamps;
 	installed_stamps.push_back(std::shared_ptr<RubberStamp>(new nod(verbose, config, gtk_proc, opencv)));
+	installed_stamps.push_back(std::shared_ptr<RubberStamp>(new hotkey(verbose, config, gtk_proc, opencv)));
 	return installed_stamps;
 }
 

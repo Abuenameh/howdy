@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     {
         for (auto &row : model["data"])
         {
-            encodings.push_back(vector_to_matrix(std::vector<double>(row)));
+            encodings.push_back(mat(std::vector<double>(row)));
         }
     }
 
