@@ -10,8 +10,12 @@
 
 #include <INIReader.h>
 
+#include "process/process.hpp"
+
 #include "video_capture.hh"
 #include "models.hh"
+
+using namespace TinyProcessLib;
 
 struct OpenCV
 {
@@ -52,6 +56,6 @@ struct OpenCV
 // 	std::map<std::string, option> options;
 // };
 
-void execute(INIReader &config, int gtk_proc, OpenCV &opencv);
+void execute(INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv);
 
 #endif // RUBBER_STAMPS_H_

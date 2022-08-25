@@ -61,7 +61,7 @@ class RubberStamp
 {
 
 public:
-	RubberStamp(bool verbose, INIReader &config_, int gtk_proc_, OpenCV &opencv_) : verbose(verbose), config(config_), gtk_proc(gtk_proc_), opencv(opencv_) {}
+	RubberStamp(bool verbose, INIReader &config_, std::shared_ptr<Process> gtk_proc_, OpenCV &opencv_) : verbose(verbose), config(config_), gtk_proc(gtk_proc_), opencv(opencv_) {}
 
 	virtual ~RubberStamp() = default;
 
@@ -73,7 +73,7 @@ public:
 		if (type == UI_SUBTEXT)
 			typedec = "S";
 
-		return send_ui_raw(typedec + "=" + text);
+		send_ui_raw(typedec + "=" + text);
 	}
 
 	/* Write raw command to howdy-gtk stdin */
@@ -88,13 +88,11 @@ public:
 		// If we're connected to the ui
 		if (gtk_proc)
 		{
-			// // Send the command as bytes
-			// self.gtk_proc.stdin.write(bytearray(command.encode("utf-8")))
-			// self.gtk_proc.stdin.flush()
+			// Send the command as bytes
+			gtk_proc->write(command);
 
-			// // Write a padding line to force the command through any buffers
-			// self.gtk_proc.stdin.write(bytearray("P=_PADDING \n".encode("utf-8")))
-			// self.gtk_proc.stdin.flush()
+			// Write a padding line to force the command through any buffers
+			gtk_proc->write("P=_PADDING \n");
 		}
 	}
 
@@ -112,7 +110,7 @@ public:
 
 	bool verbose;
 	INIReader &config;
-	int gtk_proc;
+	std::shared_ptr<Process> gtk_proc;
 	OpenCV &opencv;
 	std::map<std::string, option> options;
 };
@@ -120,7 +118,7 @@ public:
 class nod : public RubberStamp
 {
 public:
-	nod(bool verbose, INIReader &config, int gtk_proc, OpenCV &opencv) : RubberStamp(verbose, config, gtk_proc, opencv) {}
+	nod(bool verbose, INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv) : RubberStamp(verbose, config, gtk_proc, opencv) {}
 
 	virtual ~nod() = default;
 
@@ -237,14 +235,14 @@ public:
 	}
 };
 
-std::vector<std::shared_ptr<RubberStamp>> get_installed_stamps(bool verbose, INIReader &config, int gtk_proc, OpenCV &opencv)
+std::vector<std::shared_ptr<RubberStamp>> get_installed_stamps(bool verbose, INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv)
 {
 	std::vector<std::shared_ptr<RubberStamp>> installed_stamps;
 	installed_stamps.push_back(std::shared_ptr<RubberStamp>(new nod(verbose, config, gtk_proc, opencv)));
 	return installed_stamps;
 }
 
-void execute(INIReader &config, int gtk_proc, OpenCV &opencv)
+void execute(INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv)
 {
 	bool verbose = config.GetBoolean("debug", "verbose_stamps", false);
 	std::vector<std::shared_ptr<RubberStamp>> installed_stamps = get_installed_stamps(verbose, config, gtk_proc, opencv);
