@@ -1,0 +1,87 @@
+#define MAX_HEIGHT 300.0
+#define MAX_WIDTH 300.0
+
+void on_page_switch(Gtk::Widget *page, guint page_num)
+{
+    if (page_num == 1)
+    {
+        INIReader config(PATH + "/config.ini");
+        std::string path = config.GetString("video", "device_path", "/dev/video1");
+
+        capture = std::make_shared<cv::VideoCapture>(path);
+
+        Gtk::EventBox *opencvbox;
+        builder->get_widget<Gtk::EventBox>("opencvbox", opencvbox);
+        opencvbox->override_background_color(Gdk::RGBA("Black"), Gtk::STATE_FLAG_NORMAL);
+
+        int height = capture->get(cv::CAP_PROP_FRAME_HEIGHT);
+        if (height == 0)
+            height = 1;
+        int width = capture->get(cv::CAP_PROP_FRAME_WIDTH);
+        if (width == 0)
+            width = 1;
+
+        scaling_factor = MAX_HEIGHT / height;
+        if (scaling_factor == 0)
+        {
+            scaling_factor = 1;
+        }
+
+        if (width * scaling_factor > MAX_WIDTH)
+        {
+            scaling_factor = (MAX_WIDTH / width);
+            if (scaling_factor == 0)
+            {
+                scaling_factor = 1;
+            }
+        }
+
+        double config_height = config.GetReal("video", "max_height", 0.0);
+        double config_scaling = (config_height / height);
+        if (config_scaling == 0)
+        {
+            config_scaling = 1;
+        }
+
+        Gtk::Label *label;
+        builder->get_widget<Gtk::Label>("videoid", label);
+        label->set_text(split(path, "/").back());
+        builder->get_widget<Gtk::Label>("videores", label);
+        label->set_text(fmt::format("{}x{}", width, height));
+        builder->get_widget<Gtk::Label>("videoresused", label);
+        label->set_text(fmt::format("{}x{}", int(width * config_scaling), int(height * config_scaling)));
+        builder->get_widget<Gtk::Label>("videorecorder", label);
+        label->set_text(config.GetString("video", "recording_plugin", "Unknown"));
+
+        Glib::signal_timeout().connect(sigc::mem_fun(this, &MainWindow::capture_frame), 10);
+    }
+    else if (capture)
+    {
+        capture->release();
+        capture = nullptr;
+    }
+}
+
+bool capture_frame()
+{
+    if (!capture)
+        return false;
+
+    cv::Mat tempframe, frame;
+    capture->read(tempframe);
+
+    cv::resize(tempframe, frame, cv::Size(), scaling_factor, scaling_factor, cv::INTER_AREA);
+
+    std::vector<unsigned char> buffer;
+    cv::imencode(".png", frame, buffer);
+
+    auto loader = Gdk::PixbufLoader::create();
+    loader->write(buffer.data(), buffer.size());
+    loader->close();
+    auto pixbuf = loader->get_pixbuf();
+
+    opencvimage->set(pixbuf);
+
+    Glib::signal_timeout().connect(sigc::mem_fun(this, &MainWindow::capture_frame), 20);
+    return false;
+}

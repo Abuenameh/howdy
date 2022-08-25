@@ -1,0 +1,137 @@
+void on_user_change()
+{
+    active_user = userlist->get_active_text();
+    load_model_list();
+}
+
+void on_user_add()
+{
+    // Open question dialog
+    Gtk::MessageDialog dialog(*this, "", false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_OK_CANCEL, true);
+    dialog.set_title("Confirm User Creation");
+    dialog.set_message("Please enter the username of the user you want to add to Howdy");
+
+    // Create the input field
+    Gtk::Entry *entry = Gtk::make_managed<Gtk::Entry>();
+
+    // Add a label to ask for a model name
+    Gtk::HBox *hbox = Gtk::make_managed<Gtk::HBox>();
+    Gtk::Label *label = Gtk::make_managed<Gtk::Label>("Username:");
+    hbox->pack_start(*label, false, false, 5);
+    hbox->pack_end(*entry, true, true, 5);
+
+    // Add the box and show the dialog
+    dialog.get_vbox()->pack_end(*hbox, true, true, 0);
+    dialog.show_all();
+
+    // Show dialog
+    int response = dialog.run();
+
+    Glib::ustring entered_user = entry->get_text();
+
+    if (response == Gtk::RESPONSE_OK)
+    {
+        userlist->append(entered_user);
+        userlist->set_active(userlistitems);
+        userlistitems += 1;
+
+        active_user = entered_user;
+        load_model_list();
+    }
+}
+
+void on_model_add()
+{
+    // Open question dialog
+    Gtk::MessageDialog dialog(*this, "", false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_OK_CANCEL, true);
+    dialog.set_title("Confirm Model Creation");
+    dialog.set_message("Please enter a name for the new model, 24 characters max");
+
+    // Create the input field
+    Gtk::Entry *entry = Gtk::make_managed<Gtk::Entry>();
+
+    // Add a label to ask for a model name
+    Gtk::HBox *hbox = Gtk::make_managed<Gtk::HBox>();
+    Gtk::Label *label = Gtk::make_managed<Gtk::Label>("Model name:");
+    hbox->pack_start(*label, false, false, 5);
+    hbox->pack_end(*entry, true, true, 5);
+
+    // Add the box and show the dialog
+    dialog.get_vbox()->pack_end(*hbox, true, true, 0);
+    dialog.show_all();
+
+    // Show dialog
+    int response = dialog.run();
+
+    Glib::ustring entered_name = entry->get_text();
+
+    if (response == Gtk::RESPONSE_OK)
+    {
+        Gtk::MessageDialog dialog(*this, "", false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
+        dialog.set_title("Creating Model");
+        dialog.set_message("Please look directly into the camera");
+        dialog.show_all();
+
+        std::this_thread::sleep_for(1s);
+        // sleep(1);
+        // dialog.run();
+
+        std::ostringstream oss;
+        Process howdy("howdy -y -U " + active_user + " add '" + entered_name + "'", "", [&](const char *bytes, size_t n)
+                      { oss << std::string{bytes, n}; });
+        int status = howdy.get_exit_status();
+        std::string output = oss.str();
+
+        dialog.hide();
+
+        if (status != 0)
+        {
+            Gtk::MessageDialog dialog(*this, "", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_CLOSE, true);
+            dialog.set_title("Howdy Error");
+            dialog.set_message(fmt::format("Error while adding model, error code {}: \n\n", status));
+            dialog.set_secondary_text(output);
+            dialog.run();
+        }
+
+        load_model_list();
+    }
+}
+
+void on_model_delete()
+{
+    auto selection = treeview->get_selection();
+    auto listmodel = selection->get_model();
+    auto iter = selection->get_selected();
+
+    if (iter)
+    {
+        auto row = *iter;
+        std::string id = Glib::ustring(row[model_columns.id]);
+        std::string name = Glib::ustring(row[model_columns.label]);
+
+        Gtk::MessageDialog dialog(*this, "", false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK_CANCEL, true);
+        dialog.set_title("Confirm Model Deletion");
+        dialog.set_message(fmt::format("Are you sure you want to delete model {} ({})?", id, name));
+        int response = dialog.run();
+
+        if (response == Gtk::RESPONSE_OK)
+        {
+            std::ostringstream oss;
+            Process howdy("howdy -y -U " + active_user + " remove " + id, "", [&](const char *bytes, size_t n)
+                          { oss << std::string{bytes, n}; });
+            int status = howdy.get_exit_status();
+            std::string output = oss.str();
+
+            if (status != 0)
+            {
+                Gtk::MessageDialog dialog(*this, "", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_CLOSE, true);
+                dialog.set_title("Howdy Error");
+                dialog.set_message(fmt::format("Error while deleting model, error code {}: \n\n", status));
+                dialog.set_secondary_text(output);
+                dialog.run();
+            }
+
+            load_model_list();
+        }
+    }
+}
