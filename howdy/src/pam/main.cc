@@ -58,13 +58,16 @@ const auto COMPARE_PROCESS_PATH = "/lib64/security/howdy/compare.py";
  */
 auto howdy_error(int status,
                  const std::function<int(int, const char *)> &conv_function)
-    -> int {
+    -> int
+{
   // If the process has exited
-  if (WIFEXITED(status)) {
+  if (WIFEXITED(status))
+  {
     // Get the status code returned
     status = WEXITSTATUS(status);
 
-    switch (status) {
+    switch (status)
+    {
     case CompareError::NO_FACE_MODEL:
       conv_function(PAM_ERROR_MSG, S("There is no face model known"));
       syslog(LOG_NOTICE, "Failure, no face model known");
@@ -84,7 +87,9 @@ auto howdy_error(int status,
                     std::string(S("Unknown error: ") + status).c_str());
       syslog(LOG_ERR, "Failure, unknown error %d", status);
     }
-  } else if (WIFSIGNALED(status)) {
+  }
+  else if (WIFSIGNALED(status))
+  {
     // We get the signal
     status = WTERMSIG(status);
 
@@ -108,12 +113,15 @@ auto howdy_error(int status,
  */
 auto howdy_status(char *username, int status, const INIReader &config,
                   const std::function<int(int, const char *)> &conv_function)
-    -> int {
-  if (status != EXIT_SUCCESS) {
+    -> int
+{
+  if (status != EXIT_SUCCESS)
+  {
     return howdy_error(status, conv_function);
   }
 
-  if (!config.GetBoolean("core", "no_confirmation", true)) {
+  if (!config.GetBoolean("core", "no_confirmation", true))
+  {
     // Construct confirmation text from i18n string
     std::string confirm_text(S("Identified face as {}"));
     std::string identify_msg =
@@ -133,42 +141,53 @@ auto howdy_status(char *username, int status, const INIReader &config,
  * @return        Returns PAM_AUTHINFO_UNAVAIL if it shouldn't be enabled,
  * PAM_SUCCESS otherwise
  */
-auto check_enabled(const INIReader &config) -> int {
+auto check_enabled(const INIReader &config) -> int
+{
   // Stop executing if Howdy has been disabled in the config
-  if (config.GetBoolean("core", "disabled", false)) {
+  if (config.GetBoolean("core", "disabled", false))
+  {
     syslog(LOG_INFO, "Skipped authentication, Howdy is disabled");
     return PAM_AUTHINFO_UNAVAIL;
   }
 
   // Stop if we're in a remote shell and configured to exit
-  if (config.GetBoolean("core", "ignore_ssh", true)) {
+  if (config.GetBoolean("core", "ignore_ssh", true))
+  {
     if (getenv("SSH_CONNECTION") != nullptr ||
-        getenv("SSH_CLIENT") != nullptr || getenv("SSHD_OPTS") != nullptr) {
+        getenv("SSH_CLIENT") != nullptr || getenv("SSHD_OPTS") != nullptr)
+    {
       syslog(LOG_INFO, "Skipped authentication, SSH session detected");
       return PAM_AUTHINFO_UNAVAIL;
     }
   }
 
   // Try to detect the laptop lid state and stop if it's closed
-  if (config.GetBoolean("core", "ignore_closed_lid", true)) {
+  if (config.GetBoolean("core", "ignore_closed_lid", true))
+  {
     glob_t glob_result;
 
     // Get any files containing lid state
     int return_value =
         glob("/proc/acpi/button/lid/*/state", 0, nullptr, &glob_result);
 
-    if (return_value != 0) {
+    if (return_value != 0)
+    {
       syslog(LOG_ERR, "Failed to read files from glob: %d", return_value);
-      if (errno != 0) {
+      if (errno != 0)
+      {
         syslog(LOG_ERR, "Underlying error: %s (%d)", strerror(errno), errno);
       }
-    } else {
-      for (size_t i = 0; i < glob_result.gl_pathc; i++) {
+    }
+    else
+    {
+      for (size_t i = 0; i < glob_result.gl_pathc; i++)
+      {
         std::ifstream file(std::string(glob_result.gl_pathv[i]));
         std::string lid_state;
         std::getline(file, lid_state, static_cast<char>(file.eof()));
 
-        if (lid_state.find("closed") != std::string::npos) {
+        if (lid_state.find("closed") != std::string::npos)
+        {
           globfree(&glob_result);
 
           syslog(LOG_INFO, "Skipped authentication, closed lid detected");
@@ -192,12 +211,14 @@ auto check_enabled(const INIReader &config) -> int {
  * @return          Returns a PAM return code
  */
 auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
-              bool auth_tok) -> int {
+              bool auth_tok) -> int
+{
   INIReader config("/lib64/security/howdy/config.ini");
   openlog("pam_howdy", 0, LOG_AUTHPRIV);
 
   // Error out if we could not read the config file
-  if (config.ParseError() != 0) {
+  if (config.ParseError() != 0)
+  {
     syslog(LOG_ERR, "Failed to parse the configuration file: %d",
            config.ParseError());
     return PAM_SYSTEM_ERR;
@@ -207,7 +228,8 @@ auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
   int pam_res = PAM_IGNORE;
 
   // Check if we shoud continue
-  if ((pam_res = check_enabled(config)) != PAM_SUCCESS) {
+  if ((pam_res = check_enabled(config)) != PAM_SUCCESS)
+  {
     return pam_res;
   }
 
@@ -216,13 +238,15 @@ auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
   const void **conv_ptr =
       const_cast<const void **>(reinterpret_cast<void **>(&conv));
 
-  if ((pam_res = pam_get_item(pamh, PAM_CONV, conv_ptr)) != PAM_SUCCESS) {
+  if ((pam_res = pam_get_item(pamh, PAM_CONV, conv_ptr)) != PAM_SUCCESS)
+  {
     syslog(LOG_ERR, "Failed to acquire conversation");
     return pam_res;
   }
 
   // Wrap the PAM conversation function in our own, easier function
-  auto conv_function = [conv](int msg_type, const char *msg_str) {
+  auto conv_function = [conv](int msg_type, const char *msg_str)
+  {
     const struct pam_message msg = {.msg_style = msg_type, .msg = msg_str};
     const struct pam_message *msgp = &msg;
 
@@ -238,9 +262,11 @@ auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
   textdomain(GETTEXT_PACKAGE);
 
   // If enabled, send a notice to the user that facial login is being attempted
-  if (config.GetBoolean("core", "detection_notice", false)) {
+  if (config.GetBoolean("core", "detection_notice", false))
+  {
     if ((conv_function(PAM_TEXT_INFO, S("Attempting facial authentication"))) !=
-        PAM_SUCCESS) {
+        PAM_SUCCESS)
+    {
       syslog(LOG_ERR, "Failed to send detection notice");
     }
   }
@@ -248,18 +274,24 @@ auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
   // Get the username from PAM, needed to match correct face model
   char *username = nullptr;
   if ((pam_res = pam_get_user(pamh, const_cast<const char **>(&username),
-                              nullptr)) != PAM_SUCCESS) {
+                              nullptr)) != PAM_SUCCESS)
+  {
     syslog(LOG_ERR, "Failed to get username");
     return pam_res;
   }
 
-  const char *const args[] = {PYTHON_EXECUTABLE, // NOLINT
-                              COMPARE_PROCESS_PATH, username, nullptr};
+  // const char *const args[] = {PYTHON_EXECUTABLE, // NOLINT
+  //                             COMPARE_PROCESS_PATH, username, nullptr};
+  const char *const args[] = {"/lib64/security/howdy/howdy-auth",
+                              username, nullptr};
   pid_t child_pid;
 
   // Start the python subprocess
-  if (posix_spawnp(&child_pid, PYTHON_EXECUTABLE, nullptr, nullptr,
-                   const_cast<char *const *>(args), nullptr) != 0) {
+  // if (posix_spawnp(&child_pid, PYTHON_EXECUTABLE, nullptr, nullptr,
+  //                  const_cast<char *const *>(args), nullptr) != 0) {
+  if (posix_spawnp(&child_pid, "/lib64/security/howdy/howdy-auth", nullptr, nullptr,
+                   const_cast<char *const *>(args), nullptr) != 0)
+  {
     syslog(LOG_ERR, "Can't spawn the howdy process: %s (%d)", strerror(errno),
            errno);
     return PAM_SYSTEM_ERR;
@@ -274,30 +306,36 @@ auto identify(pam_handle_t *pamh, int flags, int argc, const char **argv,
 // Called by PAM when a user needs to be authenticated, for example by running
 // the sudo command
 PAM_EXTERN auto pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
-                                    const char **argv) -> int {
+                                    const char **argv) -> int
+{
   return identify(pamh, flags, argc, argv, false);
 }
 
 // Called by PAM when a session is started, such as by the su command
 PAM_EXTERN auto pam_sm_open_session(pam_handle_t *pamh, int flags, int argc,
-                                    const char **argv) -> int {
+                                    const char **argv) -> int
+{
   return identify(pamh, flags, argc, argv, false);
 }
 
 // The functions below are required by PAM, but not needed in this module
 PAM_EXTERN auto pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
-                                 const char **argv) -> int {
+                                 const char **argv) -> int
+{
   return PAM_IGNORE;
 }
 PAM_EXTERN auto pam_sm_close_session(pam_handle_t *pamh, int flags, int argc,
-                                     const char **argv) -> int {
+                                     const char **argv) -> int
+{
   return PAM_IGNORE;
 }
 PAM_EXTERN auto pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc,
-                                 const char **argv) -> int {
+                                 const char **argv) -> int
+{
   return PAM_IGNORE;
 }
 PAM_EXTERN auto pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
-                               const char **argv) -> int {
+                               const char **argv) -> int
+{
   return PAM_IGNORE;
 }
