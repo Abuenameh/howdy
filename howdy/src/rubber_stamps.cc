@@ -8,8 +8,9 @@
 
 #include "utils.hh"
 #include "rubber_stamps.hh"
+#include "keyboard/keyboard.hh"
 
-using namespace std::chrono_literals;
+using namespace std::literals;
 
 enum TextType
 {
