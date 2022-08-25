@@ -1,10 +1,14 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <sys/syslog.h>
+#include <syslog.h>
+
 #include <chrono>
 
 #include <opencv2/videoio.hpp>
 #include <dlib/opencv.h>
+#include <dlib/dnn.h>
 
 using namespace dlib;
 
