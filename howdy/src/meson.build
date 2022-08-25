@@ -4,10 +4,7 @@ inih_cpp = dependency('INIReader', fallback: ['inih', 'INIReader_dep'])
 dlib = dependency('dlib-1')
 opencv = dependency('opencv4')
 libevdev = dependency('libevdev')
-# libdlib = meson.get_compiler('cpp').find_library('dlib')
-#libpam = meson.get_compiler('cpp').find_library('pam')
-#threads = dependency('threads')
-add_global_arguments(['-Wno-unused', '-Wno-deprecated-enum-enum-conversion', '-Wno-sign-compare'], language: 'cpp')
+add_global_arguments(['-Wno-unused', '-Wno-deprecated-enum-enum-conversion', '-Wno-sign-compare', '-Wno-bidi-chars'], language: 'cpp')
 
 # Translations
 #subdir('po')
@@ -21,16 +18,15 @@ executable(
 	'rubber_stamps.cc',
 	'process/process.cpp',
 	'process/process_unix.cpp',
-#	'enter_device.cc',
+	'keyboard/canonical_names.cc',
+	'keyboard/generic.cc',
+	'keyboard/keyboard_event.cc',
+	'keyboard/nix_common.cc',
+	'keyboard/nix_keyboard.cc',
+	'keyboard/keyboard.cc',
 	dependencies: [
-#		libpam,
 		inih_cpp,
 		dlib,
 		opencv,
-#		threads,
-#		libevdev,
 	]
-#	install: false,
-#	install_dir: '/lib64/security',
-#	name_prefix: ''
 )
