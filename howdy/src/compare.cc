@@ -47,44 +47,23 @@ typedef std::chrono::time_point<std::chrono::system_clock> time_point;
 std::shared_ptr<Process> gtk_proc;
 std::function<void(const char *bytes, size_t n)> gtk_pipe;
 
-void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage)
 /*Exit while closeing howdy-gtk properly*/
 void exit_gtk()
 {
-    if (iimage.channels() == 1)
-    {
-        assign_image(oimage, cv_image<unsigned char>(iimage));
-    }
-    else if (iimage.channels() == 3)
-    {
-        assign_image(oimage, cv_image<bgr_pixel>(iimage));
-    }
-    else
-    {
-        syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
-        exit_code(1);
-    }
     // Exit the auth ui process if there is one
     if (gtk_proc)
         gtk_proc->kill(true);
 }
 
-time_point now()
 /*Send message to the auth ui*/
 void send_to_ui(std::string type, std::string message)
 {
-    return std::chrono::system_clock::now();
-}
     // Only execute of the proccess started
     if (gtk_proc)
     {
         // Format message so the ui can parse it
         message = type + "=" + message + " \n";
 
-std::string to_string(double value) {
-    std::ostringstream osstream;
-    osstream << value;
-    return osstream.str();
         // Try to send the message to the auth ui, but it's okay if that fails
         gtk_proc->write(message);
     }

@@ -12,10 +12,26 @@ typedef std::chrono::time_point<std::chrono::system_clock> time_point;
 
 const std::string PATH = "/lib64/security/howdy";
 
-void exit_code(int code);
+inline void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage)
+{
+    if (iimage.channels() == 1)
+    {
+        assign_image(oimage, cv_image<unsigned char>(iimage));
+    }
+    else if (iimage.channels() == 3)
+    {
+        assign_image(oimage, cv_image<bgr_pixel>(iimage));
+    }
+    else
+    {
+        syslog(LOG_ERR, "Unsupported image type, must be 8bit gray or RGB image.");
+        exit(1);
+    }
+}
 
-void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage);
-
-time_point now();
+inline time_point now()
+{
+    return std::chrono::system_clock::now();
+}
 
 #endif // UTILS_H_
