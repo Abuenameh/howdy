@@ -32,6 +32,10 @@
 #include "json/json.hpp"
 #include "process/process.hpp"
 
+#define FMT_HEADER_ONLY
+#include "fmt/core.h"
+#include "fmt/chrono.h"
+
 using json = nlohmann::json;
 using namespace dlib;
 using namespace TinyProcessLib;
@@ -270,16 +274,28 @@ int main(int argc, char *argv[])
     /* Generate snapshot after detection */
     auto make_snapshot = [&](std::string type)
     {
+        // std::time_t t = std::time(nullptr);
+        // std::tm tm = *std::localtime(&t);
+        // std::ostringstream osstream;
+        // osstream << std::put_time(&tm, "%Y/%m/%d %H:%M:%S UTC");
+
         char hostname[HOST_NAME_MAX];
         gethostname(hostname, HOST_NAME_MAX);
 
+        // std::vector<std::string> text_lines{
+        //     type + " LOGIN",
+        //     "Date: " + osstream.str(),
+        //     "Scan time: " + to_string(round(std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "s",
+        //     "Frames: " + std::to_string(frames) + " (" + to_string(round(frames / std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "FPS)",
+        //     "Hostname: " + std::string(hostname),
+        //     "Best certainty value: " + to_string(round(lowest_certainty * 100) / 10)};
         std::vector<std::string> text_lines{
             type + " LOGIN",
-            "Date: " + osstream.str(),
-            "Scan time: " + to_string(round(std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "s",
-            "Frames: " + std::to_string(frames) + " (" + to_string(round(frames / std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "FPS)",
+            "Date: " + fmt::format("{:%Y/%m/%d %H:%M:%S} UTC", now()),
+            "Scan time: " + fmt::format("{:.2f}", std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_times["fr"]).count()/1000.0) + "s",
+            "Frames: " + std::to_string(frames) + " (" + fmt::format("{:.2f}", double(frames) / std::chrono::duration_cast<std::chrono::seconds>(now() - start_times["fr"]).count()) + "FPS)",
             "Hostname: " + std::string(hostname),
-            "Best certainty value: " + to_string(round(lowest_certainty * 100) / 10)};
+            "Best certainty value: " + fmt::format("{:.1f}", lowest_certainty * 10)};
         generate(snapframes, text_lines);
     };
 
