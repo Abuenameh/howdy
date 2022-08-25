@@ -29,7 +29,7 @@
 #include "rubber_stamps.hh"
 #include "utils.hh"
 
-#include "json/json.hpp"
+#include "utils/json.hpp"
 #include "process/process.hpp"
 
 #define FMT_HEADER_ONLY
