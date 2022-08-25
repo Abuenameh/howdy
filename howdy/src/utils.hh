@@ -10,7 +10,7 @@ using namespace dlib;
 
 typedef std::chrono::time_point<std::chrono::system_clock> time_point;
 
-const std::string PATH = "/lib64/security/howdy";
+const std::string PATH("/lib64/security/howdy");
 
 inline void convert_image(cv::Mat &iimage, matrix<rgb_pixel> &oimage)
 {
