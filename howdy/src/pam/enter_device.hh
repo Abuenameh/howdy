@@ -5,7 +5,8 @@
 #include <libevdev/libevdev.h>
 #include <memory>
 
-class EnterDevice {
+class EnterDevice
+{
   std::unique_ptr<struct libevdev, decltype(&libevdev_free)> raw_device;
   std::unique_ptr<struct libevdev_uinput, decltype(&libevdev_uinput_destroy)>
       raw_uinput_device;

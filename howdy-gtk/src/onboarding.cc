@@ -15,7 +15,7 @@
 #include "../../howdy/src/fmt/core.h"
 
 #include "../../howdy/src/utils.hh"
-#include "../../howdy/src/string_utils/string_utils.hh"
+#include "../../howdy/src/utils/string.hpp"
 
 namespace fs = std::filesystem;
 
@@ -43,8 +43,8 @@ public:
     /*Initialize the sticky window*/
     OnboardingWindow()
     {
-        // signal_delete_event().connect(sigc::mem_fun(this, &OnboardingWindow::exit));
-        signal_delete_event().connect([this](GdkEventAny* event) { exit(); return true; });
+        signal_delete_event().connect([this](GdkEventAny *event)
+                                      { exit(); return true; });
 
         builder = Gtk::Builder::create();
         builder->add_from_file("/lib64/security/howdy-gtk/onboarding.glade");
@@ -177,8 +177,8 @@ public:
                                                }};
 
         std::vector<fs::path> device_ids;
-        for (auto const &dir_entry : fs::directory_iterator{"/dev/v4l/by-path"})
         // for (auto const &dir_entry : fs::directory_iterator{"/home/abuenameh/v4l"})
+        for (auto const &dir_entry : fs::directory_iterator{"/dev/v4l/by-path"})
             device_ids.push_back(dir_entry.path());
         std::vector<std::vector<std::string>> device_rows;
 
@@ -196,8 +196,6 @@ public:
 
             // Get the udevadm details to try to get a better name
             std::ostringstream oss;
-            // Process udevadm_process("/bin/sh -c udevadm info -r --query=all -n " + device_path, "", [&](const char *bytes, size_t n)
-            //                         { oss << std::string{bytes, n}; });
             Process udevadm_process("udevadm info -r --query=all -n " + device_path, "", [&](const char *bytes, size_t n)
                                     { oss << std::string{bytes, n}; });
             udevadm_process.get_exit_status();

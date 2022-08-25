@@ -18,7 +18,7 @@
 #include "../../howdy/src/fmt/core.h"
 
 #include "../../howdy/src/utils.hh"
-#include "../../howdy/src/string_utils/string_utils.hh"
+#include "../../howdy/src/utils/string.hpp"
 
 namespace fs = std::filesystem;
 
@@ -64,7 +64,6 @@ public:
         // Listen for a window redraw
         signal_draw().connect(sigc::mem_fun(this, &StickyWindow::draw));
         // Listen for a force close or click event and exit
-        // self.connect("destroy", self.exit)
         signal_delete_event().connect([this](GdkEventAny *event)
                                       { exit(); return true; });
         signal_button_press_event().connect([this](GdkEventButton *event)
@@ -151,11 +150,10 @@ public:
         {
             // Parse a message
             if (comm[0] == 'M')
-                message = trim(comm.substr(2)); //[2:].strip()
+                message = trim(comm.substr(2));
             // Parse subtext
             if (comm[0] == 'S')
-                // self.subtext += " "
-                subtext = trim(comm.substr(2)); //[2:].strip()
+                subtext = trim(comm.substr(2));
         }
 
         // Redraw the ui
@@ -179,37 +177,40 @@ public:
     std::string subtext;
 };
 
-void deelevate() {
-  gid_t newgid = getgid(), oldgid = getegid();
-  uid_t newuid = getuid(), olduid = geteuid();
-   
-  /* If root privileges are to be dropped, be sure to pare down the ancillary
-   * groups for the process before doing anything else because the setgroups(  )
-   * system call requires root privileges.  Drop ancillary groups regardless of
-   * whether privileges are being dropped temporarily or permanently.
-   */
-  if (!olduid) setgroups(1, &newgid);
-   
-  if (newgid != oldgid) {
-    if (setregid(newgid, newgid) == -1) abort();
-  }
-   
-  if (newuid != olduid) {
-    if (setreuid(newuid, newuid) == -1) abort();
-  }
-   
-  /* verify that the changes were successful */
+void deelevate()
+{
+    gid_t newgid = getgid(), oldgid = getegid();
+    uid_t newuid = getuid(), olduid = geteuid();
+
+    /* If root privileges are to be dropped, be sure to pare down the ancillary
+     * groups for the process before doing anything else because the setgroups(  )
+     * system call requires root privileges.  Drop ancillary groups regardless of
+     * whether privileges are being dropped temporarily or permanently.
+     */
+    if (!olduid)
+        setgroups(1, &newgid);
+
+    if (newgid != oldgid)
+    {
+        if (setregid(newgid, newgid) == -1)
+            abort();
+    }
+
+    if (newuid != olduid)
+    {
+        if (setreuid(newuid, newuid) == -1)
+            abort();
+    }
+
+    /* verify that the changes were successful */
     if (newgid != oldgid && (setegid(oldgid) != -1 || getegid() != newgid))
-      abort();
+        abort();
     if (newuid != olduid && (seteuid(olduid) != -1 || geteuid() != newuid))
-      abort();
+        abort();
 }
 
 void auth_main(int argc, char *argv[])
 {
-    // Make sure we quit on a SIGINT
-    // signal.signal(signal.SIGINT, signal.SIG_DFL)
-
     deelevate();
 
     Gtk::Main main(argc, argv);

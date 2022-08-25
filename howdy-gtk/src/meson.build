@@ -7,9 +7,6 @@ libevdev = dependency('libevdev')
 gtk = dependency('gtkmm-3.0')
 add_global_arguments(['-Wno-unused', '-Wno-deprecated-enum-enum-conversion', '-Wno-sign-compare'], language: 'cpp')
 
-# Translations
-#subdir('po')
-
 executable(
 	'howdy-gtk',
 	'init.cc',

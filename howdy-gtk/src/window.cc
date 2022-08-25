@@ -16,7 +16,7 @@
 #include "../../howdy/src/fmt/core.h"
 
 #include "../../howdy/src/utils.hh"
-#include "../../howdy/src/string_utils/string_utils.hh"
+#include "../../howdy/src/utils/string.hpp"
 
 namespace fs = std::filesystem;
 
@@ -96,9 +96,6 @@ public:
             col->add_attribute(*renderer, "text", i);
             treeview->append_column(*col);
         }
-        // treeview->append_column("ID", model_columns.id);
-        // treeview->append_column("Created", model_columns.created);
-        // treeview->append_column("Label", model_columns.label);
 
         // Add the treeview
         modellistbox->add(*treeview);
@@ -250,9 +247,6 @@ void elevate(int argc, char *argv[], bool graphical = true)
 
 void window_main(int argc, char *argv[], bool force_onboarding)
 {
-    // Make sure we quit on a SIGINT
-    // signal.signal(signal.SIGINT, signal.SIG_DFL)
-
     // Make sure we run as sudo
     elevate(argc, argv);
 

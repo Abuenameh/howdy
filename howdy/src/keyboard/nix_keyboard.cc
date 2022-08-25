@@ -18,7 +18,7 @@
 #include "keyboard_event.hh"
 #include "keyboard.hh"
 
-#include "../string_utils/string_utils.hh"
+#include "../utils/string.hpp"
 #include "../process/process.hpp"
 
 using namespace TinyProcessLib;

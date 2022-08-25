@@ -4,7 +4,7 @@
 #include <memory>
 #include <regex>
 
-#include "string_utils/string_utils.hh"
+#include "utils/string.hpp"
 
 #include "utils.hh"
 #include "rubber_stamps.hh"
@@ -145,7 +145,6 @@ public:
 			{
 				// Get the location of the nose on the active axis
 				long nosepoint = (axis == "x") ? face_landmarks.part(4).x() : face_landmarks.part(4).y();
-				// nosepoint = getattr(face_landmarks.part(4), axis)
 
 				// If this is the first frame set the previous values to the current ones
 				if (last_nosepoint[axis] == -1)
@@ -199,9 +198,11 @@ public:
 	}
 };
 
-class hotkey : public RubberStamp {
-	public:
-	hotkey(bool verbose, INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv) : RubberStamp(verbose, config, gtk_proc, opencv) {
+class hotkey : public RubberStamp
+{
+public:
+	hotkey(bool verbose, INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv) : RubberStamp(verbose, config, gtk_proc, opencv)
+	{
 		pressed_key = "none";
 	}
 
@@ -212,14 +213,16 @@ class hotkey : public RubberStamp {
 		return "hotkey";
 	}
 
-		/*Set the default values for the optional arguments*/
-	virtual void declare_config() {
+	/*Set the default values for the optional arguments*/
+	virtual void declare_config()
+	{
 		options["abort_key"] = "esc";
 		options["confirm_key"] = "enter";
 	}
 
-		/*Wait for the user to press a hotkey*/
-	virtual bool run() {
+	/*Wait for the user to press a hotkey*/
+	virtual bool run()
+	{
 		double time_left = std::get<double>(options["timeout"]);
 		std::string time_string = std::get<bool>(options["failsafe"]) ? "Aborting authorisation in " : "Authorising in ";
 
@@ -228,24 +231,26 @@ class hotkey : public RubberStamp {
 		set_ui_text("Press " + std::get<std::string>(options["abort_key"]) + " to abort, " + std::get<std::string>(options["confirm_key"]) + " to authorise", UI_SUBTEXT);
 
 		// Register hotkeys with the kernel
-		add_hotkey(std::get<std::string>(options["abort_key"]), [&]() {
+		add_hotkey(std::get<std::string>(options["abort_key"]), [&]()
+				   {
 			on_key("abort");
-			return false;
-		});
-		add_hotkey(std::get<std::string>(options["confirm_key"]), [&]() {
+			return false; });
+		add_hotkey(std::get<std::string>(options["confirm_key"]), [&]()
+				   {
 			on_key("confirm");
-			return false;
-		});
+			return false; });
 
 		// While we have not hit our timeout yet
-		while (time_left > 0) {
+		while (time_left > 0)
+		{
 			// Remove 0.1 seconds from the timer, as that's how long we sleep
 			time_left -= 0.1;
 			// Update the ui with the new time
 			set_ui_text(time_string + std::to_string(int(time_left) + 1), UI_TEXT);
 
 			// If the abort key was pressed while the loop was sleeping
-			if (pressed_key == "abort") {
+			if (pressed_key == "abort")
+			{
 				// Set the ui to confirm the abort
 				set_ui_text("Authentication aborted", UI_TEXT);
 				set_ui_text("", UI_SUBTEXT);
@@ -267,13 +272,13 @@ class hotkey : public RubberStamp {
 		return !std::get<bool>(options["failsafe"]);
 	}
 
-		/*Called when the user presses a key*/
-	void on_key(std::string type) {
+	/*Called when the user presses a key*/
+	void on_key(std::string type)
+	{
 		pressed_key = type;
 	}
 
 	std::string pressed_key;
-
 };
 
 std::vector<std::shared_ptr<RubberStamp>> get_installed_stamps(bool verbose, INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &opencv)
@@ -342,13 +347,7 @@ void execute(INIReader &config, std::shared_ptr<Process> gtk_proc, OpenCV &openc
 		// Try to get the class with the same name
 		std::shared_ptr<RubberStamp> instance = stamp_map[type];
 
-		// // Set some opensv shorthands
-		// instance.video_capture = opencv["video_capture"]
-		// instance.face_detector = opencv["face_detector"]
-		// instance.pose_predictor = opencv["pose_predictor"]
-		// instance.clahe = opencv["clahe"]
-
-		// // Parse and set the 2 required options for all rubberstamps
+		// Parse and set the 2 required options for all rubberstamps
 		instance->options["timeout"] = std::stod(std::regex_replace(regex_result[2].str(), std::regex("[a-zA-Z]"), ""));
 		instance->options["failsafe"] = regex_result[3] != "faildeadly";
 

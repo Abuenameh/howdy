@@ -17,17 +17,15 @@
 #include <dlib/opencv.h>
 #include <dlib/dnn.h>
 #include <dlib/image_processing/frontal_face_detector.h>
-// #include <dlib/image_processing.h>
 
 #include <INIReader.h>
 
 #include "../video_capture.hh"
 #include "../models.hh"
-#include "../compare.hh"
 #include "../snapshot.hh"
 #include "../rubber_stamps.hh"
 #include "../utils.hh"
-#include "../string_utils/string_utils.hh"
+#include "../utils/string.hpp"
 
 #include "../utils/json.hpp"
 #include "../utils/argparse.hpp"

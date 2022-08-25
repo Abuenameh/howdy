@@ -6,9 +6,6 @@ opencv = dependency('opencv4')
 libevdev = dependency('libevdev')
 add_global_arguments(['-Wno-unused', '-Wno-deprecated-enum-enum-conversion', '-Wno-sign-compare'], language: 'cpp')
 
-# Translations
-#subdir('po')
-
 executable(
 	'howdy',
 	'cli.cc',

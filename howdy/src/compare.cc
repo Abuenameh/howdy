@@ -18,13 +18,11 @@
 #include <dlib/opencv.h>
 #include <dlib/dnn.h>
 #include <dlib/image_processing/frontal_face_detector.h>
-// #include <dlib/image_processing.h>
 
 #include <INIReader.h>
 
 #include "video_capture.hh"
 #include "models.hh"
-#include "compare.hh"
 #include "snapshot.hh"
 #include "rubber_stamps.hh"
 #include "utils.hh"
@@ -147,31 +145,15 @@ int main(int argc, char *argv[])
     int rotate = config.GetInteger("video", "rotate", 0);
 
     // Send the gtk outupt to the terminal if enabled in the config
-    // gtk_pipe = sys.stdout if gtk_stdout else subprocess.DEVNULL
     if (gtk_stdout)
         gtk_pipe = [](const char *bytes, size_t n)
         { std::cout << std::string{bytes, n}; };
     else
         gtk_pipe = nullptr;
 
-    gtk_proc = std::make_shared<Process>("/lib64/security/howdy-gtk/howdy-gtk --start-auth-ui", "", gtk_pipe, gtk_pipe, true);
-    // gtk_proc = subprocess.Popen(["../howdy-gtk/src/init.py", "--start-auth-ui"], stdin=subprocess.PIPE, stdout=gtk_pipe, stderr=gtk_pipe)
-    // if (gtk_stdout) {
-    // gtk_proc = std::make_shared<Process>("../howdy-gtk/src/build/howdy-gtk --start-auth-ui", "", [](const char *bytes, size_t n)
-    //               { std::cout << std::string{bytes, n}; }, [](const char *bytes, size_t n)
-    //               { std::cout << std::string{bytes, n}; }, true)
-    // }
-    // else {
-    // gtk_proc = std::make_shared<Process>("../howdy-gtk/src/build/howdy-gtk --start-auth-ui", "", nullptr, nullptr, true)
-    // }
-    std::atexit(exit_gtk);
-
     // Start the auth ui, register it to be always be closed on exit
-    // try:
-    //     gtk_proc = subprocess.Popen(["../howdy-gtk/src/init.py", "--start-auth-ui"], stdin=subprocess.PIPE, stdout=gtk_pipe, stderr=gtk_pipe)
-    //     atexit.register(exit)
-    // except FileNotFoundError:
-    //     pass
+    gtk_proc = std::make_shared<Process>("/lib64/security/howdy-gtk/howdy-gtk --start-auth-ui", "", gtk_pipe, gtk_pipe, true);
+    std::atexit(exit_gtk);
 
     // Write to the stdin to redraw ui
     send_to_ui("M", "Starting up...");
@@ -253,25 +235,13 @@ int main(int argc, char *argv[])
     /* Generate snapshot after detection */
     auto make_snapshot = [&](std::string type)
     {
-        // std::time_t t = std::time(nullptr);
-        // std::tm tm = *std::localtime(&t);
-        // std::ostringstream osstream;
-        // osstream << std::put_time(&tm, "%Y/%m/%d %H:%M:%S UTC");
-
         char hostname[HOST_NAME_MAX];
         gethostname(hostname, HOST_NAME_MAX);
 
-        // std::vector<std::string> text_lines{
-        //     type + " LOGIN",
-        //     "Date: " + osstream.str(),
-        //     "Scan time: " + to_string(round(std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "s",
-        //     "Frames: " + std::to_string(frames) + " (" + to_string(round(frames / std::chrono::duration<double>(now() - start_times["fr"]).count() * 100) / 100) + "FPS)",
-        //     "Hostname: " + std::string(hostname),
-        //     "Best certainty value: " + to_string(round(lowest_certainty * 100) / 10)};
         std::vector<std::string> text_lines{
             type + " LOGIN",
             "Date: " + fmt::format("{:%Y/%m/%d %H:%M:%S} UTC", now()),
-            "Scan time: " + fmt::format("{:.2f}", std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_times["fr"]).count()/1000.0) + "s",
+            "Scan time: " + fmt::format("{:.2f}", std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_times["fr"]).count() / 1000.0) + "s",
             "Frames: " + std::to_string(frames) + " (" + fmt::format("{:.2f}", double(frames) / std::chrono::duration_cast<std::chrono::seconds>(now() - start_times["fr"]).count()) + "FPS)",
             "Hostname: " + std::string(hostname),
             "Best certainty value: " + fmt::format("{:.1f}", lowest_certainty * 10)};

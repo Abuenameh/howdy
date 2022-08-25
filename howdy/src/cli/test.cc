@@ -18,17 +18,15 @@
 #include <dlib/opencv.h>
 #include <dlib/dnn.h>
 #include <dlib/image_processing/frontal_face_detector.h>
-// #include <dlib/image_processing.h>
 
 #include <INIReader.h>
 
 #include "../video_capture.hh"
 #include "../models.hh"
-#include "../compare.hh"
 #include "../snapshot.hh"
 #include "../rubber_stamps.hh"
 #include "../utils.hh"
-#include "../string_utils/string_utils.hh"
+#include "../utils/string.hpp"
 
 #include "../utils/json.hpp"
 #include "../utils/argparse.hpp"
@@ -108,7 +106,6 @@ Click on the image to enable or disable slow mode
     int fps = 0;
     // The current second we're counting
     int sec = std::chrono::time_point_cast<std::chrono::seconds>(now()).time_since_epoch().count();
-    // sec = int(time.time())
     // recognition time
     int rec_tm = 0;
 
@@ -254,7 +251,7 @@ Click on the image to enable or disable slow mode
     }
     catch (...)
     {
-        // # On ctrl+C
+        // On ctrl+C
         // except KeyboardInterrupt:
         // Let the user know we're stopping
         std::cout << std::endl

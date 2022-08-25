@@ -23,7 +23,6 @@
 
 #include "../video_capture.hh"
 #include "../models.hh"
-#include "../compare.hh"
 #include "../snapshot.hh"
 #include "../rubber_stamps.hh"
 #include "../utils.hh"
@@ -86,11 +85,13 @@ void add(argparse::Namespace &args, std::string &user)
     }
 
     // To try read a premade encodings file if it exists
-    try {
-    std::ifstream f(enc_file);
-    encodings = json::parse(f);
+    try
+    {
+        std::ifstream f(enc_file);
+        encodings = json::parse(f);
     }
-    catch (std::exception &e) {
+    catch (std::exception &e)
+    {
     }
 
     // Print a warning if too many encodings are being added
@@ -146,8 +147,7 @@ void add(argparse::Namespace &args, std::string &user)
         {"time", std::chrono::time_point_cast<std::chrono::seconds>(now()).time_since_epoch().count()},
         {"label", label},
         {"id", encodings.size()},
-        {"data", {}}
-    };
+        {"data", {}}};
 
     // Set up video_capture
     VideoCapture video_capture(config);
@@ -158,8 +158,6 @@ void add(argparse::Namespace &args, std::string &user)
     // Give the user time to read
     std::this_thread::sleep_for(2s);
 
-    // Will contain found face encodings
-    // enc = [];
     // Count the number of read frames
     int frames = 0;
     // Count the number of illuminated read frames
